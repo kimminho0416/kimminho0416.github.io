@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 맘대로 스케줄러 & 알람 타이머</title>
+    <!-- Importing Tailwind CSS for state-of-the-art responsive UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Web Fonts for premium and warm look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons for visuals -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            background-color: #fbf9f4; /* Cozy warm ivory background */
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f3edd7;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d4c3a3;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #bfae8f;
+        }
+        .active-day-btn {
+            background-color: #85582c !important;
+            color: #ffffff !important;
+            border-color: #85582c !important;
+        }
+    </style>
+</head>
+<body class="text-stone-800 min-h-screen flex flex-col pb-12">
+
+    <header class="bg-gradient-to-r from-amber-900 to-amber-950 text-amber-50 shadow-md py-6 px-4 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-100 text-amber-900 p-2.5 rounded-2xl shadow-inner">
+                    <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight">마이 플렉스 스케줄 알람</h1>
+                    <p class="text-xs text-amber-200 mt-0.5">내가 직접 정한 시간에 알람이 울려 행동 습관을 만드는 똑똑한 계획표</p>
+                </div>
+            </div>
+            
+            <!-- Real-time dynamic status display -->
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-950/60 px-4 py-2 rounded-xl border border-amber-800 flex items-center gap-2">
+                    <i class="fa-regular fa-calendar-days text-amber-300"></i>
+                    <span id="live-date" class="text-xs md:text-sm font-semibold text-amber-100">0000년 00월 00일 (일)</span>
+                </div>
+                <div class="bg-amber-950/60 px-4 py-2 rounded-xl border border-amber-800 flex items-center gap-2">
+                    <i class="fa-solid fa-clock text-amber-400"></i>
+                    <span id="live-clock" class="font-mono text-sm md:text-base font-bold tracking-widest text-amber-100">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto px-4 mt-8 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Add Schedule & Active Schedule Board (lg:col-span-7) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+            
+            <!-- 1. Schedule Addition Panel -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-amber-100">
+                <h2 class="text-lg font-bold text-amber-950 flex items-center gap-2 mb-4">
+                    <i class="fa-solid fa-calendar-plus text-amber-700"></i>
+                    ⏰ 나만의 맞춤 일정 추가하기
+                </h2>
+                
+                <form id="schedule-form" onsubmit="addSchedule(event)" class="space-y-4">
+                    <!-- Title & Category Selection -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 mb-1">일정명 (예: 수학 오답풀이, 영어 독서)</label>
+                            <input type="text" id="sched-title" required placeholder="무엇을 할 계획인가요?" 
+                                class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 mb-1">카테고리 분류</label>
+                            <select id="sched-category" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none cursor-pointer transition">
+                                <option value="reading">📖 독서 습관</option>
+                                <option value="study">✏️ 학교/학원 공부</option>
+                                <option value="homework">📝 과제 및 수행평가</option>
+                                <option value="rest">☕ 휴식 및 명상</option>
+                                <option value="hobby">🎨 예체능 및 취미</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Time & Timer Duration Allocation -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 mb-1">알람 울릴 시간</label>
+                            <input type="time" id="sched-time" required 
+                                class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 mb-1">권장 집중 시간 (타이머 연동)</label>
+                            <select id="sched-duration" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none cursor-pointer transition">
+                                <option value="5">5분 (짧게 집중)</option>
+                                <option value="10">10분</option>
+                                <option value="15" selected>15분 (추천 독서 시간)</option>
+                                <option value="20">20분</option>
+                                <option value="30">30분</option>
+                                <option value="50">50분</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Day Selector (Repeat) -->
+                    <div>
+                        <label class="block text-xs font-bold text-stone-500 mb-1.5">반복할 요일 선택 (미선택 시 1회성 '오늘만' 울림)</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="toggleDaySelector(this, 1)" class="day-select-btn flex-grow text-center border border-stone-200 bg-stone-50 hover:border-amber-600 text-stone-600 font-bold py-2 rounded-xl text-xs transition">월</button>
+                            <button type="button" onclick="toggleDaySelector(this, 2)" class="day-select-btn flex-grow text-center border border-stone-200 bg-stone-50 hover:border-amber-600 text-stone-600 font-bold py-2 rounded-xl text-xs transition">화</button>
+                            <button type="button" onclick="toggleDaySelector(this, 3)" class="day-select-btn flex-grow text-center border border-stone-200 bg-stone-50 hover:border-amber-600 text-stone-600 font-bold py-2 rounded-xl text-xs transition">수</button>
+                            <button type="button" onclick="toggleDaySelector(this, 4)" class="day-select-btn flex-grow text-center border border-stone-200 bg-stone-50 hover:border-amber-600 text-stone-600 font-bold py-2 rounded-xl text-xs transition">목</button>
+                            <button type="button" onclick="toggleDaySelector(this, 5)" class="day-select-btn flex-grow text-center border border-stone-200 bg-stone-50 hover:border-amber-600 text-stone-600 font-bold py-2 rounded-xl text-xs transition">금</button>
+                            <button type="button" onclick="toggleDaySelector(this, 6)" class="day-select-btn flex-grow text-center border border-stone-200 bg-stone-50 hover:border-amber-600 text-stone-600 font-bold py-2 rounded-xl text-xs transition text-blue-600">토</button>
+                            <button type="button" onclick="toggleDaySelector(this, 0)" class="day-select-btn flex-grow text-center border border-stone-200 bg-stone-50 hover:border-amber-600 text-stone-600 font-bold py-2 rounded-xl text-xs transition text-red-600">일</button>
+                        </div>
+                    </div>
+
+                    <!-- Action Submit Button -->
+                    <button type="submit" class="w-full bg-amber-800 hover:bg-amber-900 text-white font-bold py-3.5 rounded-xl shadow-md transition active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-plus"></i> 나만의 알람 일정에 추가하기
+                    </button>
+                </form>
+            </div>
+
+            <!-- 2. Dynamic Schedule Board -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-amber-100 flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-amber-950 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-amber-700"></i>
+                            📋 등록된 나의 일정 목록
+                        </h2>
+                        <p class="text-xs text-stone-400 mt-0.5">매일 약속시간이 되면 푸시 알람음과 타이머 팝업이 작동해요.</p>
+                    </div>
+                    <span id="sched-counter" class="text-xs font-bold bg-amber-100 text-amber-900 px-3 py-1 rounded-full">등록 0건</span>
+                </div>
+
+                <!-- Schedule List Container -->
+                <div class="space-y-3 flex-grow overflow-y-auto max-h-[420px] pr-1 custom-scrollbar" id="schedule-list">
+                    <!-- Loaded dynamically in JavaScript -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Focus Zone & Real-time Achievement Stats (lg:col-span-5) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- 1. Universal Focus Zone (Pomodoro integration with active tasks) -->
+            <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 shadow-sm border border-amber-200 flex flex-col items-center text-center">
+                <h2 class="text-lg font-bold text-amber-950 flex items-center gap-2 mb-1 self-start">
+                    <i class="fa-solid fa-stopwatch text-amber-700 animate-pulse"></i>
+                    뽀모도로 몰입 집중 타이머
+                </h2>
+                <p class="text-xs text-stone-500 mb-6 self-start">알람을 통해 시작했거나, 직접 켜서 고강도 집중을 연습해봐요.</p>
+
+                <!-- Timer Target Display Card -->
+                <div id="timer-target-card" class="bg-white border border-amber-200 px-4 py-2.5 rounded-xl mb-6 shadow-sm w-full hidden">
+                    <span class="text-xxs font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded mr-2">진행 중</span>
+                    <span id="timer-target-title" class="font-bold text-sm text-stone-800">일정명 자리</span>
+                </div>
+
+                <!-- Digital Clock Face -->
+                <div class="relative w-44 h-44 bg-white rounded-full border-4 border-amber-800 flex flex-col justify-center items-center shadow-lg mb-6">
+                    <span class="text-xs text-amber-700 font-extrabold tracking-wider uppercase mb-1">Focus Time</span>
+                    <div id="timer-display" class="text-4xl font-black font-mono tracking-widest text-amber-950">15:00</div>
+                    <div id="timer-progress-bar" class="absolute inset-0 rounded-full border-4 border-transparent border-t-amber-400 rotate-0 pointer-events-none transition-transform duration-1000"></div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex gap-3 w-full justify-center">
+                    <button onclick="toggleTimer()" id="btn-timer-start" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition active:scale-95 shadow">
+                        <i class="fa-solid fa-play"></i> 시작
+                    </button>
+                    <button onclick="resetTimer()" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition active:scale-95">
+                        <i class="fa-solid fa-rotate-right"></i> 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Simple Performance Diary (Record completed milestones) -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-amber-100 flex-grow flex flex-col">
+                <h2 class="text-lg font-bold text-amber-950 flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-award text-amber-600"></i>
+                    🏆 행동 성공 타임라인
+                </h2>
+                <p class="text-xs text-stone-500 mb-4">계획을 끝까지 지키고 완료 기록을 남겨보세요!</p>
+
+                <!-- Simple Quick Logger -->
+                <div class="space-y-2 mb-6 bg-stone-50 p-3.5 rounded-xl border border-stone-150">
+                    <input type="text" id="log-task-name" placeholder="📖 어떤 공부/독서를 끝냈나요?" class="w-full bg-white border border-stone-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                    <textarea id="log-note" rows="2" placeholder="💭 소감 한 줄 (예: 집중 아주 잘됨! 뿌듯하다.)" class="w-full bg-white border border-stone-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none resize-none"></textarea>
+                    <button onclick="saveLog()" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-bold py-2 rounded-lg text-xs transition active:scale-95">
+                        <i class="fa-solid fa-check mr-1"></i> 나 자신 칭찬하며 기록 저장
+                    </button>
+                </div>
+
+                <!-- Real-time timeline entries -->
+                <div class="space-y-3 flex-grow overflow-y-auto max-h-56 pr-1 custom-scrollbar" id="logs-container">
+                    <!-- Logs list updated from LocalStorage -->
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Fullscreen interactive Alarm Sound & Overlay System -->
+    <div id="alarm-overlay" class="fixed inset-0 bg-amber-950/95 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-8 text-center shadow-2xl border-4 border-amber-600 animate-bounce-short">
+            <div class="w-24 h-24 bg-amber-100 text-amber-800 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner animate-pulse">
+                <i class="fa-solid fa-bell text-5xl"></i>
+            </div>
+            
+            <span class="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full uppercase tracking-widest">Alarm Event</span>
+            <h3 class="text-2xl font-black text-amber-950 mt-4 mb-2" id="overlay-sched-title">스케줄 이름 자리</h3>
+            <p class="text-stone-400 text-sm mb-6 leading-relaxed" id="overlay-sched-meta">
+                지금 약속된 시간이 되었습니다! <br>미루지 말고 바로 집중을 실행해볼까요?
+            </p>
+            
+            <!-- Real Action buttons -->
+            <div class="flex flex-col gap-2.5">
+                <button onclick="dismissAlarmAndFocus(true)" class="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-3.5 rounded-xl shadow-lg transition active:scale-95 text-sm">
+                    ⚡ 바로 시작하기 (타이머 자동 연동)
+                </button>
+                <button onclick="dismissAlarmAndFocus(false)" class="w-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold py-3 rounded-xl transition active:scale-95 text-xs">
+                    🔔 알람 끄기
+                </button>
+                <button onclick="snoozeActiveAlarm()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 font-medium py-2.5 rounded-xl transition active:scale-95 text-xs">
+                    ⏱️ 5분 뒤 다시 울림 (스누즈)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Days map for displaying weekday text
+        const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+        
+        // Active memory arrays
+        let schedules = [];
+        let logs = [];
+        let activeSelectedDays = []; // Tracks highlighted buttons in form
+
+        // Timer controller vars
+        let isTimerRunning = false;
+        let timerSeconds = 15 * 60;
+        let timerInterval = null;
+        let activeTimerTask = null; // Associated schedule task details
+
+        // Alarm engine chime variables
+        let audioCtx = null;
+        let alarmBeepInterval = null;
+        let activeAlarmObject = null;
+        let triggeredTodayMap = {}; // Prevent multi-fires in the exact same minute
+
+        // Initialize state
+        window.onload = function() {
+            loadDatabase();
+            renderSchedules();
+            renderLogs();
+            updateLiveClock();
+
+            // Set background heartbeat loops
+            setInterval(updateLiveClock, 1000);
+            setInterval(runAlarmEngine, 1000);
+        };
+
+        function loadDatabase() {
+            // Load schedules
+            const rawSchedules = localStorage.getItem('user_schedules');
+            if (rawSchedules) {
+                schedules = JSON.parse(rawSchedules);
+            } else {
+                // Seed with realistic demo schedules
+                schedules = [
+                    { id: 'sc_demo1', title: '📚 매일 15분 독서 몰입하기', category: 'reading', time: '17:00', duration: 15, days: [1,2,3,4,5], active: true },
+                    { id: 'sc_demo2', title: '✏️ 일일 수학 연산 2장', category: 'study', time: '19:30', duration: 30, days: [1,3,5], active: true }
+                ];
+                saveSchedules();
+            }
+
+            // Load logs
+            const rawLogs = localStorage.getItem('user_logs');
+            if (rawLogs) {
+                logs = JSON.parse(rawLogs);
+            } else {
+                logs = [
+                    { id: 'log_demo1', date: '2026-06-04', task: '📚 매일 15분 독서 몰입하기 완수', note: '처음엔 엉덩이가 들썩였지만 15분 알차게 완독 완료!' }
+                ];
+                saveLogs();
+            }
+        }
+
+        function saveSchedules() {
+            localStorage.setItem('user_schedules', JSON.stringify(schedules));
+        }
+
+        function saveLogs() {
+            localStorage.setItem('user_logs', JSON.stringify(logs));
+        }
+
+        // Clock UI updater
+        function updateLiveClock() {
+            const now = new Date();
+            
+            // Format Date string
+            const yy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const dayText = WEEKDAYS[now.getDay()];
+            document.getElementById('live-date').innerText = `${yy}년 ${mm}월 ${dd}일 (${dayText})`;
+
+            // Format Time string
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mi = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('live-clock').innerText = `${hh}:${mi}:${ss}`;
+        }
+
+        function toggleDaySelector(btnElement, dayNum) {
+            const index = activeSelectedDays.indexOf(dayNum);
+            if (index > -1) {
+                activeSelectedDays.splice(index, 1);
+                btnElement.classList.remove('active-day-btn');
+            } else {
+                activeSelectedDays.push(dayNum);
+                btnElement.classList.add('active-day-btn');
+            }
+        }
+
+        function addSchedule(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('sched-title').value.trim();
+            const category = document.getElementById('sched-category').value;
+            const time = document.getElementById('sched-time').value;
+            const duration = parseInt(document.getElementById('sched-duration').value);
+
+            const newSchedule = {
+                id: 'sched_' + Date.now(),
+                title: title,
+                category: category,
+                time: time,
+                duration: duration,
+                days: [...activeSelectedDays], // If empty, it means run once
+                active: true
+            };
+
+            schedules.push(newSchedule);
+            saveSchedules();
+            renderSchedules();
+
+            // Reset Form Fields
+            document.getElementById('schedule-form').reset();
+            // Clear highlighted days
+            activeSelectedDays = [];
+            document.querySelectorAll('.day-select-btn').forEach(btn => {
+                btn.classList.remove('active-day-btn');
+            });
+        }
+
+        function toggleScheduleStatus(id) {
+            schedules = schedules.map(sc => {
+                if (sc.id === id) {
+                    return { ...sc, active: !sc.active };
+                }
+                return sc;
+            });
+            saveSchedules();
+            renderSchedules();
+        }
+
+        function deleteSchedule(id) {
+            schedules = schedules.filter(sc => sc.id !== id);
+            saveSchedules();
+            renderSchedules();
+        }
+
+        function renderSchedules() {
+            const container = document.getElementById('schedule-list');
+            container.innerHTML = '';
+            
+            document.getElementById('sched-counter').innerText = `등록 ${schedules.length}건`;
+
+            if (schedules.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-stone-400">
+                        <i class="fa-solid fa-calendar-xmark text-4xl mb-3 block"></i>
+                        <p class="text-sm">등록된 일정이 없어요. 위의 양식에서 공부나 독서 일정을 추가해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort schedules by time
+            const sortedSchedules = [...schedules].sort((a,b) => a.time.localeCompare(b.time));
+
+            sortedSchedules.forEach(sc => {
+                const dayLabels = sc.days.length === 0 
+                    ? '<span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">오늘 한 번</span>'
+                    : sc.days.map(d => `<span class="text-[10px] bg-stone-100 text-stone-700 font-bold px-1 py-0.5 rounded mr-0.5">${WEEKDAYS[d]}</span>`).join('');
+
+                let categoryBadge = '';
+                switch(sc.category) {
+                    case 'reading': categoryBadge = '📖 독서'; break;
+                    case 'study': categoryBadge = '✏️ 학습'; break;
+                    case 'homework': categoryBadge = '📝 수행'; break;
+                    case 'rest': categoryBadge = '☕ 휴식'; break;
+                    default: categoryBadge = '🎨 취미';
+                }
+
+                const card = document.createElement('div');
+                card.className = `flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition gap-3 ${
+                    sc.active 
+                    ? 'bg-white border-amber-100 hover:shadow-md' 
+                    : 'bg-stone-50 border-stone-200 opacity-60'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 bg-amber-50 text-amber-900 font-mono font-bold text-lg md:text-xl py-1.5 px-3 rounded-xl border border-amber-100/50 flex flex-col items-center justify-center">
+                            <span>${sc.time}</span>
+                            <span class="text-[10px] text-amber-600 font-sans">${sc.duration}분</span>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[10px] bg-stone-800 text-white font-extrabold px-1.5 py-0.5 rounded">${categoryBadge}</span>
+                                ${dayLabels}
+                            </div>
+                            <h4 class="font-bold text-sm md:text-base text-stone-800 mt-1">${sc.title}</h4>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 border-t md:border-t-0 border-stone-100 pt-2.5 md:pt-0">
+                        <!-- Run Manually now -->
+                        <button onclick="manuallyRunSchedule('${sc.id}')" title="지금 수동으로 알람/타이머 테스트 실행" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/50 font-bold px-2.5 py-1.5 rounded-lg transition active:scale-95">
+                            <i class="fa-solid fa-play"></i> 수동시작
+                        </button>
+                        <!-- Active Toggle -->
+                        <button onclick="toggleScheduleStatus('${sc.id}')" class="text-xl transition">
+                            <i class="fa-solid ${sc.active ? 'fa-toggle-on text-amber-700' : 'fa-toggle-off text-stone-400'}"></i>
+                        </button>
+                        <!-- Delete Button -->
+                        <button onclick="deleteSchedule('${sc.id}')" class="text-stone-400 hover:text-red-500 transition p-1.5">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function runAlarmEngine() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const currentSecond = now.getSeconds();
+
+            // Run alarm checks exactly once a minute at the start of the minute (0th second)
+            if (currentSecond === 0) {
+                schedules.forEach(sc => {
+                    if (sc.active) {
+                        // Check if day matches
+                        const dayMatches = sc.days.length === 0 || sc.days.includes(currentDay);
+                        const timeMatches = sc.time === currentHHMM;
+
+                        if (dayMatches && timeMatches) {
+                            // Guard check: Avoid multiple fires in single minute
+                            const fireKey = `${sc.id}_${currentHHMM}`;
+                            if (!triggeredTodayMap[fireKey]) {
+                                triggeredTodayMap[fireKey] = true;
+                                triggerAlarmOverlay(sc);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function manuallyRunSchedule(id) {
+            const sc = schedules.find(item => item.id === id);
+            if (sc) {
+                triggerAlarmOverlay(sc);
+            }
+        }
+
+        function triggerBeep() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                const now = audioCtx.currentTime;
+                osc.type = 'triangle'; // Pure cozy organic sound
+                
+                // Friendly repeating chime
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.45); // C6
+                
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+                
+                osc.start(now);
+                osc.stop(now + 0.9);
+            } catch (e) {
+                console.log("Audio deferred or blocked by browser gesture", e);
+            }
+        }
+
+        function startSoundLoop() {
+            triggerBeep();
+            if (alarmBeepInterval) clearInterval(alarmBeepInterval);
+            alarmBeepInterval = setInterval(triggerBeep, 1400);
+        }
+
+        function stopSoundLoop() {
+            if (alarmBeepInterval) {
+                clearInterval(alarmBeepInterval);
+                alarmBeepInterval = null;
+            }
+        }
+
+        function triggerAlarmOverlay(scheduleObject) {
+            activeAlarmObject = scheduleObject;
+            
+            document.getElementById('overlay-sched-title').innerText = scheduleObject.title;
+            
+            let displayCategory = '';
+            switch(scheduleObject.category) {
+                case 'reading': displayCategory = '📖 독서 습관'; break;
+                case 'study': displayCategory = '✏️ 학습 몰입'; break;
+                case 'homework': displayCategory = '📝 과제 관리'; break;
+                case 'rest': displayCategory = '☕ 소중한 휴식'; break;
+                default: displayCategory = '🎨 취미 활동';
+            }
+            document.getElementById('overlay-sched-meta').innerHTML = `
+                현재 약속된 <b>[${displayCategory}]</b> 시간입니다.<br>
+                약속된 시간: <strong class="text-amber-800">${scheduleObject.time}</strong> (${scheduleObject.duration}분 코스)
+            `;
+            
+            // Open screen overlay
+            document.getElementById('alarm-overlay').classList.remove('hidden');
+            
+            // Turn on sounds loop
+            startSoundLoop();
+        }
+
+        function dismissAlarmAndFocus(startFocusNow = false) {
+            stopSoundLoop();
+            document.getElementById('alarm-overlay').classList.add('hidden');
+
+            if (startFocusNow && activeAlarmObject) {
+                // Focus container layout
+                const targetCard = document.getElementById('timer-target-card');
+                const targetTitle = document.getElementById('timer-target-title');
+                
+                activeTimerTask = activeAlarmObject;
+                targetTitle.innerText = activeAlarmObject.title;
+                targetCard.classList.remove('hidden');
+
+                // Adapt Timer seconds
+                timerSeconds = activeAlarmObject.duration * 60;
+                updateTimerUI();
+                
+                // Automatically activate study timer
+                startFocusTimer();
+            }
+            activeAlarmObject = null;
+        }
+
+        function snoozeActiveAlarm() {
+            if (!activeAlarmObject) return;
+            
+            stopSoundLoop();
+            document.getElementById('alarm-overlay').classList.add('hidden');
+
+            // Formulate snoozed task 5 minutes later
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 5);
+            const snoozeTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const snoozedItem = {
+                id: 'snooze_' + Date.now(),
+                title: `[⏱️스누즈] ${activeAlarmObject.title}`,
+                category: activeAlarmObject.category,
+                time: snoozeTimeStr,
+                duration: activeAlarmObject.duration,
+                days: [], // Trigger once
+                active: true
+            };
+
+            schedules.push(snoozedItem);
+            saveSchedules();
+            renderSchedules();
+            activeAlarmObject = null;
+        }
+
+        function updateTimerUI() {
+            const mm = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const ss = String(timerSeconds % 60).padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${mm}:${ss}`;
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                stopFocusTimer();
+            } else {
+                startFocusTimer();
+            }
+        }
+
+        function startFocusTimer() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            isTimerRunning = true;
+            document.getElementById('btn-timer-start').innerHTML = `<i class="fa-solid fa-pause"></i> 일시정지`;
+            document.getElementById('btn-timer-start').classList.replace('bg-amber-800', 'bg-stone-700');
+
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerUI();
+                } else {
+                    // Completed!
+                    stopFocusTimer();
+                    triggerCompletionChime();
+                }
+            }, 1000);
+        }
+
+        function stopFocusTimer() {
+            isTimerRunning = false;
+            document.getElementById('btn-timer-start').innerHTML = `<i class="fa-solid fa-play"></i> 시작`;
+            document.getElementById('btn-timer-start').classList.replace('bg-stone-700', 'bg-amber-800');
+            clearInterval(timerInterval);
+        }
+
+        function resetTimer() {
+            stopFocusTimer();
+            if (activeTimerTask) {
+                timerSeconds = activeTimerTask.duration * 60;
+            } else {
+                timerSeconds = 15 * 60;
+            }
+            updateTimerUI();
+        }
+
+        function triggerCompletionChime() {
+            const completionDemoTask = {
+                title: activeTimerTask ? `🎉 완벽한 집중 완수: ${activeTimerTask.title}` : "🎉 15분 완전한 집중 몰입 완료!",
+                category: 'rest',
+                time: '완료!',
+                duration: 0
+            };
+            
+            // Pop active target display card
+            document.getElementById('timer-target-card').classList.add('hidden');
+            activeTimerTask = null;
+            
+            triggerAlarmOverlay(completionDemoTask);
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '';
+
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">아직 기록이 비어있습니다. 오늘 실천을 마친 뒤 기록을 남겨보세요!</div>`;
+                return;
+            }
+
+            // Show newest records at the top
+            const sortedLogs = [...logs].reverse();
+
+            sortedLogs.forEach(lg => {
+                const logCard = document.createElement('div');
+                logCard.className = 'bg-stone-50 border border-stone-200/80 p-3.5 rounded-xl relative hover:shadow-sm transition';
+                
+                logCard.innerHTML = `
+                    <button onclick="deleteLog('${lg.id}')" class="absolute top-2.5 right-2.5 text-stone-400 hover:text-red-500 transition p-1">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                    <div class="flex items-center gap-1 text-amber-800 mb-1">
+                        <i class="fa-solid fa-circle-check text-[10px]"></i>
+                        <span class="text-[10px] font-mono tracking-wider font-semibold text-stone-400">${lg.date}</span>
+                    </div>
+                    <h5 class="font-bold text-xs text-stone-800 pr-5">${lg.task}</h5>
+                    <p class="text-[11px] text-stone-500 bg-white p-2 rounded-lg border border-stone-150 mt-1.5 italic leading-relaxed">
+                        " ${lg.note} "
+                    </p>
+                `;
+                container.appendChild(logCard);
+            });
+        }
+
+        function saveLog() {
+            const task = document.getElementById('log-task-name').value.trim();
+            const note = document.getElementById('log-note').value.trim();
+
+            if (!task || !note) {
+                // Interactive error alerts inline
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'bg-red-50 border border-red-200 text-red-700 text-xs p-2.5 rounded-xl text-center mb-3 animate-bounce';
+                errorAlert.innerText = '💡 완료한 스케줄 이름과 소감을 채워주렴!';
+                document.getElementById('log-task-name').parentNode.prepend(errorAlert);
+                setTimeout(() => errorAlert.remove(), 2500);
+                return;
+            }
+
+            const today = new Date();
+            const dateString = today.toISOString().split('T')[0];
+
+            const newLog = {
+                id: 'log_' + Date.now(),
+                date: dateString,
+                task: task,
+                note: note
+            };
+
+            logs.push(newLog);
+            saveLogs();
+            renderLogs();
+
+            // Clear Log Inputs
+            document.getElementById('log-task-name').value = '';
+            document.getElementById('log-note').value = '';
+        }
+
+        function deleteLog(id) {
+            logs = logs.filter(l => l.id !== id);
+            saveLogs();
+            renderLogs();
+        }
+    </script>
+</body>
+</html>
